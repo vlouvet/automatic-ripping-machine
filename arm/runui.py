@@ -22,11 +22,26 @@ def is_docker():
     )
 
 
+def check_for_debug_mode():
+    debug_mode_is = os.getenv("DEBUG")
+    # If debug env isn't set run as false
+    if debug_mode_is is None:
+        debug_mode_is = False
+    # Test for string and then convert some diff versions of 'yes' to True
+    if isinstance(debug_mode_is, str):
+        if debug_mode_is.lower() in ("yes", "true", "t", "1"):
+            debug_mode_is = True
+        else:
+            debug_mode_is = False
+    return debug_mode_is
+
+
 host = cfg.arm_config['WEBSERVER_IP']
 # Check if auto ip address 'x.x.x.x' or if inside docker - set internal ip from host and use WEBSERVER_IP for notify
 if host == 'x.x.x.x' or is_docker():
     # autodetect host IP address
     from netifaces import interfaces, ifaddresses, AF_INET
+
     ip_list = []
     for interface in interfaces():
         inet_links = ifaddresses(interface).get(AF_INET, [])
@@ -41,4 +56,5 @@ if host == 'x.x.x.x' or is_docker():
     app.logger.info(f"Starting ARMUI on interface address - {host}:{cfg.arm_config['WEBSERVER_PORT']}")
 
 if __name__ == '__main__':
-    app.run(host=host, port=cfg.arm_config['WEBSERVER_PORT'], debug=True)
+    debug_mode = check_for_debug_mode()
+    app.run(host=host, port=cfg.arm_config['WEBSERVER_PORT'], debug=debug_mode)
