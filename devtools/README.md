@@ -40,13 +40,13 @@ options:
 
 ## Requirements
 
-python colorama lib is required, install with one of the following:
+python flake8, colorama libs are required, install with one of the following:
 
 Using Apt 
-``` sudo apt install python3-colorama ```
+``` sudo apt install python3-colorama python3-flake8```
 
 or by using python package manager (pip)
-``` python3 -m pip install colorama ```
+``` python3 -m pip install colorama python3-flake8```
 
 ## Install
 
