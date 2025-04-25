@@ -40,7 +40,13 @@ options:
 
 ## Requirements
 
-No unique requirements for devtools
+python colorama lib is required, install with one of the following:
+
+Using Apt 
+``` sudo apt install python3-colorama ```
+
+or by using python package manager (pip)
+``` python3 -m pip install colorama ```
 
 ## Install
 
