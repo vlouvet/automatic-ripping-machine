@@ -10,6 +10,8 @@ import os
 import armui
 import log
 
+ENABLE_DEBUG_OUTPUT = True
+
 
 def flake8(arm_path):
     """
@@ -22,18 +24,19 @@ def flake8(arm_path):
 
     log.info(f"Running quality checks against ARM - {arm_path}")
 
-    flake_config = "--max-complexity=15 --max-line-length=120 --show-source --statistics"
+    flake_config = f"--max-complexity=15 --max-line-length=120 --show-source --statistics \
+        {' --verbose' if ENABLE_DEBUG_OUTPUT else ''}"
 
     # Run flake8 against ARM - arm
-    armui.run_command(f"flake8 {arm_path}/arm {flake_config}",
+    armui.run_command(f"python3 -m flake8 {arm_path}/arm {flake_config}",
                       f"ARM QA check completed against {arm_path}/arm")
 
     # Run flake8 against ARM - test
-    armui.run_command(f"flake8 {arm_path}/test {flake_config}",
+    armui.run_command(f"python3 -m flake8 {arm_path}/test {flake_config}",
                       f"ARM QA check completed against {arm_path}/test")
 
     # Run flake8 against ARM - devtools
-    armui.run_command(f"flake8 {arm_path}/devtools {flake_config}",
+    armui.run_command(f"python3 -m flake8 {arm_path}/devtools {flake_config}",
                       f"ARM QA check completed against {arm_path}/devtools")
 
     # Restart the UI once git has worked
