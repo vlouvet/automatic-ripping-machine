@@ -25,6 +25,7 @@ import armdocker
 
 __version__ = '0.3'
 arm_home = "/home/arm"
+arm_git_dir = ".."
 arm_install = "/opt/arm"
 
 
@@ -71,7 +72,7 @@ if args.db_rem:
 
 # -qa Quality Checks against ARM
 if args.qa:
-    armgit.flake8(arm_install)
+    armgit.flake8(arm_git_dir)
 
 if args.pr:
     armgit.pr_update()
