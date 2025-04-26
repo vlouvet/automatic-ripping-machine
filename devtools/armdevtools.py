@@ -22,6 +22,7 @@ import argparse
 import armgit
 import database
 import armdocker
+import os
 
 __version__ = '0.3'
 arm_home = "/home/arm"
@@ -72,7 +73,8 @@ if args.db_rem:
 
 # -qa Quality Checks against ARM
 if args.qa:
-    armgit.flake8(arm_git_dir)
+    directory_to_use = arm_home if os.path.exists(arm_home) else arm_git_dir
+    armgit.flake8(directory_to_use)
 
 if args.pr:
     armgit.pr_update()
