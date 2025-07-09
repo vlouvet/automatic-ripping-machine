@@ -216,7 +216,10 @@ def get_cd_art(job, infos):
             )
 
             if first_release_with_artwork is not None:
-                artlist = mb.get_image_list(first_release_with_artwork['id'])
+                try:
+                    artlist = mb.get_image_list(first_release_with_artwork['id'])
+                except Exception as e:
+                    print(f"Unexpected error getting cover art: {e}")
                 for image in artlist["images"]:
                     # We dont care if its verified ?
                     if "image" in image:
