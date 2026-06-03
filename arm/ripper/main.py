@@ -192,6 +192,16 @@ def setup():
     # Setup logging
     log_file = logger.setup_job_log(job)
 
+    # Re-emit the blkid-fallback recovery log (fork issue #1) now that the
+    # per-job file handler is attached. The same line is also logged from
+    # parse_udev() but at that point only the early/global handler is in
+    # place, so the per-job log file would miss it.
+    if getattr(job, "label_recovered_via_blkid", False):
+        logging.info(
+            f"parse_udev: ID_FS_LABEL was missing from udev; "
+            f"blkid fallback recovered label='{job.label}'"
+        )
+
     # Capture and report the ARM Info
     arminfo = ARMInfo(cfg.arm_config["INSTALLPATH"], cfg.arm_config['DBFILE'])
     job.arm_version = arminfo.arm_version

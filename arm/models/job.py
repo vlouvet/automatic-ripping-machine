@@ -201,6 +201,12 @@ class Job(db.Model):
         # udev events (the host arm-wrapper filters), so blkid is always
         # reasonable to try; on a drive with no readable media blkid returns
         # nothing and the fallback no-ops.
+        #
+        # We also set label_recovered_via_blkid so main.setup() can emit a
+        # visible log line *after* setup_job_log() has attached the per-job
+        # file handler (the logging.info() below happens too early to be
+        # captured in the per-job log).
+        self.label_recovered_via_blkid = False
         if not self.label:
             try:
                 blkid_label = subprocess.check_output(
@@ -214,6 +220,7 @@ class Job(db.Model):
                         f"blkid fallback recovered label='{blkid_label}'"
                     )
                     self.label = blkid_label
+                    self.label_recovered_via_blkid = True
             except (subprocess.CalledProcessError, subprocess.TimeoutExpired,
                     FileNotFoundError) as exc:
                 logging.debug(f"parse_udev: blkid fallback failed: {exc}")
