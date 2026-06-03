@@ -189,6 +189,42 @@ class Job(db.Model):
             else:
                 continue
 
+        # Fix for fork-local issue #1: udev may emit the change event before
+        # its blkid worker populates the device's filesystem and media
+        # properties. On a cold spin-up the change event can arrive with as
+        # little as DEVNAME and DEVTYPE — no ID_FS_LABEL and no
+        # ID_CDROM_MEDIA_DVD either (observed live as job 245). blkid via
+        # subprocess reads the volume label directly and is not subject to
+        # that race.
+        #
+        # No disctype guard: parse_udev is only reached for optical-drive
+        # udev events (the host arm-wrapper filters), so blkid is always
+        # reasonable to try; on a drive with no readable media blkid returns
+        # nothing and the fallback no-ops.
+        #
+        # We also set label_recovered_via_blkid so main.setup() can emit a
+        # visible log line *after* setup_job_log() has attached the per-job
+        # file handler (the logging.info() below happens too early to be
+        # captured in the per-job log).
+        self.label_recovered_via_blkid = False
+        if not self.label:
+            try:
+                blkid_label = subprocess.check_output(
+                    ["blkid", "-o", "value", "-s", "LABEL", self.devpath],
+                    stderr=subprocess.DEVNULL,
+                    timeout=5,
+                ).decode().strip()
+                if blkid_label:
+                    logging.info(
+                        f"parse_udev: ID_FS_LABEL missing from udev; "
+                        f"blkid fallback recovered label='{blkid_label}'"
+                    )
+                    self.label = blkid_label
+                    self.label_recovered_via_blkid = True
+            except (subprocess.CalledProcessError, subprocess.TimeoutExpired,
+                    FileNotFoundError) as exc:
+                logging.debug(f"parse_udev: blkid fallback failed: {exc}")
+
     def get_pid(self):
         """
         Get the jobs process id
