@@ -189,6 +189,27 @@ class Job(db.Model):
             else:
                 continue
 
+        # Fix for fork-local issue #1: udev may emit the change event before
+        # its blkid worker populates ID_FS_LABEL, so optical-disc labels can
+        # come back missing on cold spin-ups. blkid via subprocess reads the
+        # volume label directly and is not subject to that race.
+        if not self.label and self.disctype in ("dvd", "bluray"):
+            try:
+                blkid_label = subprocess.check_output(
+                    ["blkid", "-o", "value", "-s", "LABEL", self.devpath],
+                    stderr=subprocess.DEVNULL,
+                    timeout=5,
+                ).decode().strip()
+                if blkid_label:
+                    logging.info(
+                        f"parse_udev: ID_FS_LABEL missing from udev; "
+                        f"blkid fallback recovered label='{blkid_label}'"
+                    )
+                    self.label = blkid_label
+            except (subprocess.CalledProcessError, subprocess.TimeoutExpired,
+                    FileNotFoundError) as exc:
+                logging.debug(f"parse_udev: blkid fallback failed: {exc}")
+
     def get_pid(self):
         """
         Get the jobs process id
