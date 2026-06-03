@@ -190,10 +190,18 @@ class Job(db.Model):
                 continue
 
         # Fix for fork-local issue #1: udev may emit the change event before
-        # its blkid worker populates ID_FS_LABEL, so optical-disc labels can
-        # come back missing on cold spin-ups. blkid via subprocess reads the
-        # volume label directly and is not subject to that race.
-        if not self.label and self.disctype in ("dvd", "bluray"):
+        # its blkid worker populates the device's filesystem and media
+        # properties. On a cold spin-up the change event can arrive with as
+        # little as DEVNAME and DEVTYPE — no ID_FS_LABEL and no
+        # ID_CDROM_MEDIA_DVD either (observed live as job 245). blkid via
+        # subprocess reads the volume label directly and is not subject to
+        # that race.
+        #
+        # No disctype guard: parse_udev is only reached for optical-drive
+        # udev events (the host arm-wrapper filters), so blkid is always
+        # reasonable to try; on a drive with no readable media blkid returns
+        # nothing and the fallback no-ops.
+        if not self.label:
             try:
                 blkid_label = subprocess.check_output(
                     ["blkid", "-o", "value", "-s", "LABEL", self.devpath],
